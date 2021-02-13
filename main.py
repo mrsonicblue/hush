@@ -10,17 +10,29 @@ from adafruit_hid.keycode import Keycode
 from adafruit_hid.consumer_control import ConsumerControl
 from adafruit_hid.consumer_control_code import ConsumerControlCode
 
-dot = adafruit_dotstar.DotStar(board.APA102_SCK, board.APA102_MOSI, 1, brightness=0.05)
+# dot = adafruit_dotstar.DotStar(board.APA102_SCK, board.APA102_MOSI, 1, brightness=0.05)
 
+# Keyboard emulation
 kbd = Keyboard(usb_hid.devices)
 cc = ConsumerControl(usb_hid.devices)
 
-button = digitalio.DigitalInOut(board.D4)
-button.direction = digitalio.Direction.INPUT
-button.pull = digitalio.Pull.UP
+# Reset button
+reset_button = digitalio.DigitalInOut(board.D0)
+reset_button.direction = digitalio.Direction.INPUT
+reset_button.pull = digitalio.Pull.UP
 
-# Rotary encoder inputs with pullup on D1 & D2
-encoder = rotaryio.IncrementalEncoder(board.D1, board.D2)
+# User button
+user_button = digitalio.DigitalInOut(board.D1)
+user_button.direction = digitalio.Direction.INPUT
+user_button.pull = digitalio.Pull.UP
+
+# Mute button
+mute_button = digitalio.DigitalInOut(board.D2)
+mute_button.direction = digitalio.Direction.INPUT
+mute_button.pull = digitalio.Pull.UP
+
+# Volume knob
+encoder = rotaryio.IncrementalEncoder(board.D3, board.D4)
 
 def wheel(pos):
     # Input a value 0 to 255 to get a color value.
@@ -39,24 +51,44 @@ def wheel(pos):
         return (0, int(pos * 3), int(255 - pos * 3))
 
 color_pos = 0
-button_pressed = False
+mute_button_pressed = False
+user_button_pressed = False
+reset_button_pressed = False
 last_position = encoder.position
 
 while True:
-    #kbd.send(Keycode.SHIFT, Keycode.K)
-
-    if button_pressed:
-        if button.value:
-            print("Button released!")
-            button_pressed = False
+    if mute_button_pressed:
+        if mute_button.value:
+            print("Mute button released!")
+            mute_button_pressed = False
     else:
-        if not button.value:
-            print("Button pressed!")
+        if not mute_button.value:
+            print("Mute button pressed!")
             cc.send(ConsumerControlCode.MUTE)
-            button_pressed = True
+            mute_button_pressed = True
 
-    dot[0] = wheel(color_pos)
-    color_pos = (color_pos + 1) % 256
+    if user_button_pressed:
+        if user_button.value:
+            print("User button released!")
+            user_button_pressed = False
+    else:
+        if not user_button.value:
+            print("User button pressed!")
+            kbd.send(Keycode.LEFT_CONTROL, Keycode.LEFT_ALT, Keycode.RIGHT_ALT)
+            user_button_pressed = True
+
+    if reset_button_pressed:
+        if reset_button.value:
+            print("Reset button released!")
+            reset_button_pressed = False
+    else:
+        if not reset_button.value:
+            print("Reset button pressed!")
+            kbd.send(Keycode.LEFT_SHIFT, Keycode.LEFT_CONTROL, Keycode.LEFT_ALT, Keycode.RIGHT_ALT)
+            reset_button_pressed = True
+
+    # dot[0] = wheel(color_pos)
+    # color_pos = (color_pos + 1) % 256
 
     current_position = encoder.position
     position_change = current_position - last_position
