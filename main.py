@@ -17,22 +17,22 @@ kbd = Keyboard(usb_hid.devices)
 cc = ConsumerControl(usb_hid.devices)
 
 # Reset button
-reset_button = digitalio.DigitalInOut(board.D0)
+reset_button = digitalio.DigitalInOut(board.D4)
 reset_button.direction = digitalio.Direction.INPUT
 reset_button.pull = digitalio.Pull.UP
 
 # User button
-user_button = digitalio.DigitalInOut(board.D1)
+user_button = digitalio.DigitalInOut(board.D3)
 user_button.direction = digitalio.Direction.INPUT
 user_button.pull = digitalio.Pull.UP
 
 # Mute button
-mute_button = digitalio.DigitalInOut(board.D2)
+mute_button = digitalio.DigitalInOut(board.D0)
 mute_button.direction = digitalio.Direction.INPUT
 mute_button.pull = digitalio.Pull.UP
 
 # Volume knob
-encoder = rotaryio.IncrementalEncoder(board.D3, board.D4)
+encoder = rotaryio.IncrementalEncoder(board.D2, board.D1)
 
 def wheel(pos):
     # Input a value 0 to 255 to get a color value.
@@ -59,32 +59,28 @@ last_position = encoder.position
 while True:
     if mute_button_pressed:
         if mute_button.value:
-            print("Mute button released!")
             mute_button_pressed = False
     else:
         if not mute_button.value:
-            print("Mute button pressed!")
             cc.send(ConsumerControlCode.MUTE)
             mute_button_pressed = True
 
     if user_button_pressed:
         if user_button.value:
-            print("User button released!")
+            kbd.release(Keycode.LEFT_CONTROL, Keycode.LEFT_ALT, Keycode.RIGHT_ALT)
             user_button_pressed = False
     else:
         if not user_button.value:
-            print("User button pressed!")
-            kbd.send(Keycode.LEFT_CONTROL, Keycode.LEFT_ALT, Keycode.RIGHT_ALT)
+            kbd.press(Keycode.LEFT_CONTROL, Keycode.LEFT_ALT, Keycode.RIGHT_ALT)
             user_button_pressed = True
 
     if reset_button_pressed:
         if reset_button.value:
-            print("Reset button released!")
+            kbd.release(Keycode.LEFT_SHIFT, Keycode.LEFT_CONTROL, Keycode.LEFT_ALT, Keycode.RIGHT_ALT)
             reset_button_pressed = False
     else:
         if not reset_button.value:
-            print("Reset button pressed!")
-            kbd.send(Keycode.LEFT_SHIFT, Keycode.LEFT_CONTROL, Keycode.LEFT_ALT, Keycode.RIGHT_ALT)
+            kbd.press(Keycode.LEFT_SHIFT, Keycode.LEFT_CONTROL, Keycode.LEFT_ALT, Keycode.RIGHT_ALT)
             reset_button_pressed = True
 
     # dot[0] = wheel(color_pos)
@@ -102,4 +98,4 @@ while True:
         print(current_position)
     last_position = current_position
   
-    time.sleep(0.05)
+    time.sleep(0.01)
